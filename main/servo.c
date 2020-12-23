@@ -13,6 +13,7 @@
 #include "esp_err.h"
 #include "servo.h"
 #include "math.h"
+#include "esp_log.h"
 
 /*
  * About this example
@@ -59,6 +60,8 @@
 #define LEDC_TEST_CH_NUM       (4)
 #define LEDC_TEST_DUTY         (4000)
 #define LEDC_TEST_FADE_TIME    (3000)
+
+static const char *TAG = "Servo";
 
 int deg2pw(int deg, int bit)
 {
@@ -161,24 +164,13 @@ void servo_task(void *arg)
         ledc_channel_config(&ledc_channel[ch]);
     }
 
-    // Initialize fade service.
-    ledc_fade_func_install(0);
-
     while (1) {
+        int deg = *(int *) arg;
+        ESP_LOGI(TAG, "%d[deg]", deg);
         for (ch = 0; ch < LEDC_TEST_CH_NUM; ch++) {
-            ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, deg2pw(10, 16));
+            ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, deg2pw(deg, 16));
             ledc_update_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel);
         }
-        vTaskDelay(500);
-        for (ch = 0; ch < LEDC_TEST_CH_NUM; ch++) {
-            ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, deg2pw(90, 16));
-            ledc_update_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel);
-        }
-        vTaskDelay(500);
-        for (ch = 0; ch < LEDC_TEST_CH_NUM; ch++) {
-            ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, deg2pw(170, 16));
-            ledc_update_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel);
-        }
-        vTaskDelay(500);
+        vTaskDelay(100);
     }
 }

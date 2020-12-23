@@ -1,4 +1,4 @@
-set(COMPONENT_SRCS "main.c" "blink.c" "display.c" "servo.c")
+set(COMPONENT_SRCS "main.c" "display.c" "servo.c")
 set(COMPONENT_ADD_INCLUDEDIRS "." "./includes")
 
 register_component()

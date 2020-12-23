@@ -58,11 +58,10 @@
 #include "aws_iot_version.h"
 #include "aws_iot_mqtt_client_interface.h"
 
-#include "blink.h"
 #include "display.h"
 #include "servo.h"
 
-static const char *TAG = "Blinky";
+static const char *TAG = "Main";
 
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
@@ -86,7 +85,7 @@ extern SemaphoreHandle_t spi_mutex;
 // Used for reading/writing from SD_Card
 extern void spi_poll();
 
-TaskHandle_t xBlink;
+int servo_deg = 0;
 
 /* CA Root certificate, device ("Thing") certificate and device
  * ("Thing") key.
@@ -161,16 +160,12 @@ void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, ui
                                     IoT_Publish_Message_Params *params, void *pData) {
     ESP_LOGI(TAG, "Subscribe callback");
     ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->payload);
-    if (strstr(topicName, "/blink") != NULL) {
-        // Get state of the FreeRTOS task, "blinkTask", using it's task handle.
-        // Suspend or resume the task depending on the returned task state
-        eTaskState blinkState = eTaskGetState(xBlink);
-        if (blinkState == eSuspended){
-            vTaskResume(xBlink);
-        } else{
-            vTaskSuspend(xBlink);
-        }
+    if (strstr(topicName, "/open") != NULL) {
+        servo_deg = 0;
     }
+    if (strstr(topicName, "/close") != NULL) {
+        servo_deg = 180;
+    }   
 }
 
 void disconnect_callback_handler(AWS_IoT_Client *pClient, void *data) {
@@ -362,7 +357,7 @@ void aws_iot_task(void *param) {
         // Publish and ignore if "ack" was received or  from AWS IoT Core
         sprintf(cPayload, "%s : %d ", "Hello from AWS IoT EduKit (QOS0)", i++);
         paramsQOS0.payloadLen = strlen(cPayload);
-        rc = aws_iot_mqtt_publish(&client, PUBLISH_TOPIC, PUBLISH_TOPIC_LEN, &paramsQOS0);
+        // rc = aws_iot_mqtt_publish(&client, PUBLISH_TOPIC, PUBLISH_TOPIC_LEN, &paramsQOS0);
         if (rc != SUCCESS){
             ESP_LOGE(TAG, "Publish QOS0 error %i", rc);
             rc = SUCCESS;
@@ -371,7 +366,7 @@ void aws_iot_task(void *param) {
         // Publish and check if "ack" was sent from AWS IoT Core
         sprintf(cPayload, "%s : %d ", "Hello from AWS IoT EduKit (QOS1)", i++);
         paramsQOS1.payloadLen = strlen(cPayload);
-        rc = aws_iot_mqtt_publish(&client, PUBLISH_TOPIC, PUBLISH_TOPIC_LEN, &paramsQOS1);
+        // rc = aws_iot_mqtt_publish(&client, PUBLISH_TOPIC, PUBLISH_TOPIC_LEN, &paramsQOS1);
         if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {
             ESP_LOGW(TAG, "QOS1 publish ack not received.");
             rc = SUCCESS;
@@ -424,7 +419,7 @@ void app_main()
     
     display_init();
     
-    // initialise_wifi();
+    initialise_wifi();
 
     #if defined (CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT)
         
@@ -436,7 +431,6 @@ void app_main()
     
     #endif
 
-        // xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 9216, NULL, 5, NULL, 1);
-        xTaskCreatePinnedToCore(&blink_task, "blink_task", 4096*1, NULL, 2, &xBlink, 1);
-        xTaskCreatePinnedToCore(&servo_task, "servo_task", 4096*1, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 9216, NULL, 5, NULL, 1);
+    xTaskCreatePinnedToCore(&servo_task, "servo_task", 4096*1, &servo_deg, 2, NULL, 1);
 }
