@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := AWS_IoT_EduKit-Hello-World
+PROJECT_NAME := KASHIKOIHAKO
 
 include $(IDF_PATH)/make/project.mk
 
