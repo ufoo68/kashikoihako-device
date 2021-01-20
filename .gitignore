@@ -5,3 +5,4 @@ components/esp-cryptoauthlib/esp_cryptoauth_utility/output_files/*
 **/.DS_Store
 sdkconfig
 sdkconfig.old
+memo
