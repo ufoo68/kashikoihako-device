@@ -6,3 +6,4 @@ components/esp-cryptoauthlib/esp_cryptoauth_utility/output_files/*
 sdkconfig
 sdkconfig.old
 memo
+utilities/AWS_IoT_registration_helper/output_files*
