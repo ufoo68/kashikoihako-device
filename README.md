@@ -5,8 +5,13 @@ For device
 ## build
 
 ```bash
-activate edukit
-%idf_path%/export.bat
+pio run --environment core2foraws
+```
+
+## upload
+
+```bash
+pio run --environment core2foraws --target upload
 ```
 
 ## register certificate
